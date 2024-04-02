@@ -54,3 +54,4 @@ def get_similary_score_with_mondo(search_term, prompt_id):
 if __name__ == "__main__":
     output = get_similary_score_with_mondo("Dental", 19)
     print(output)
+
