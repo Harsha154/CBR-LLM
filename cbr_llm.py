@@ -54,7 +54,7 @@ def run_llm_with_cbr(ind_num, ind_text, cases_data, prompt_id, wcl = 0.35, wct =
             
     # print(local_weighted_vector_case_instructions)
     print(f"score = {local_weighted_vector} with {local_weighted_vector_id}")
-    prompt = f"{local_weighted_vector_case_instructions}\n{ind_text}\n{local_weighted_vector_prompt_4}"
+    prompt = f"[INST]\{local_weighted_vector_case_instructions}\n{ind_text}\n{local_weighted_vector_prompt_4}\n[/INST]\n\n"
     prompt_input_ids = tokenizer.encode(prompt, return_tensors="pt").to(device)
     words_in_prompt = len(prompt.split())
     try:

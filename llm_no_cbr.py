@@ -25,7 +25,7 @@ def run_llm_with_no_cbr(ind_num, ind_text, prompt_id):
     Prompt1 = "what is the disease described in this text? Limit answer to the disease name."
     Prompt4 = "Find the disease and format your answer like this: [disease]. If there is more than one disease, then format your answer like this: [disease 1, disease 2, etc.]. Do not include any other information."
             
-    prompt = f"{Prompt1}\n{ind_text}\n{Prompt4}"
+    prompt = f"[INST]\{Prompt1}\n{ind_text}\n{Prompt4}\n[/INST]\n\n"
     prompt_input_ids = tokenizer.encode(prompt, return_tensors="pt").to(device)
     # words_in_prompt = len(prompt.split())
     try:
