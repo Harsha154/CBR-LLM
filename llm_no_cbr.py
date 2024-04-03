@@ -57,8 +57,8 @@ def run_llm_with_no_cbr(ind_num, ind_text, prompt_id):
 
 if __name__ == "__main__":
     # Load the data from CSV files
-    organized_ind = "/home/hs875/Llama-2/cases/organized_indications.csv"
-    cases_csv = "/home/hs875/Llama-2/cases/updated_case_base_3-31.csv"
+    organized_ind = "organized_indications.csv"
+    cases_csv = "updated_case_base_3-31.csv"
     data = pd.read_csv(organized_ind)
     cases_data = pd.read_csv(cases_csv) 
     prompt_id = 00000
