@@ -1,7 +1,7 @@
 import torch
 import pandas as pd
 import re
-import mondo_similarity
+import string_match
 import torch.nn.functional as F
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
@@ -13,13 +13,12 @@ tokenizer = AutoTokenizer.from_pretrained("togethercomputer/Llama-2-7B-32K-Instr
 model = AutoModelForCausalLM.from_pretrained("togethercomputer/Llama-2-7B-32K-Instruct",
                                              trust_remote_code=True, torch_dtype=torch.float16).to(device)
 
-def run_llm_with_cbr(ind_num, ind_text, cases_data, prompt_id, wcl = 0.35, wct = 0.65):
-    # Tokenize and encode the text excerpt to get its embedding
+def run_llm_with_cbr(ind_num, ind_text, cases_data, wcl = 0.35, wct = 0.65):
     input_ids = tokenizer.encode(ind_text, return_tensors="pt").to(device)
     with torch.no_grad():
         model_output = model(input_ids, output_hidden_states=True)
         input_embedding = model_output.hidden_states[-1].mean(dim=1)  # Average pooling over the sequence
-    
+
     input_text_length = len(ind_text)
     # local cosine_sim
     local_weight_similarity_case_instructions = ""
@@ -38,7 +37,7 @@ def run_llm_with_cbr(ind_num, ind_text, cases_data, prompt_id, wcl = 0.35, wct =
         # Compute local_cosine similarity between the input_embedding and case_embedding
         local_cosine_sim_tensor = F.cosine_similarity(input_embedding, case_embedding, dim=1)
         local_cosine_sim = local_cosine_sim_tensor.item()
-        
+
         # Compute local_length similarity between the input_text_length and case_passage_len
         local_length_sim = abs(case_passage_len-input_text_length)/max(input_text_length,case_passage_len)
 
@@ -51,7 +50,7 @@ def run_llm_with_cbr(ind_num, ind_text, cases_data, prompt_id, wcl = 0.35, wct =
             local_weighted_vector_case_instructions = case_dict["Prompt Item 1"] + case_dict["Prompt Item 2"] + case_dict["Instructions (Prompt Item 3)"]
             local_weighted_vector_prompt_4 = case_dict["Prompt Item 4"]
             local_weighted_vector_prompt_3 = case_dict["Instructions (Prompt Item 3)"]
-            
+
     # print(local_weighted_vector_case_instructions)
     print(f"score = {local_weighted_vector} with {local_weighted_vector_id}")
     prompt = f"[INST]\{local_weighted_vector_case_instructions}\n{ind_text}\n{local_weighted_vector_prompt_4}\n[/INST]\n\n"
@@ -71,17 +70,20 @@ def run_llm_with_cbr(ind_num, ind_text, cases_data, prompt_id, wcl = 0.35, wct =
         answer = output_text.replace(prompt, "")
     except RuntimeError as e:
         output_text = (f"Runtime error: {e}")
-    
+
     # get normalized similarity score agaisnt mondo disease names
-    norm_similarity_score_dict = mondo_similarity.get_similary_score_with_mondo(answer, prompt_id)
+    match_pass_or_fail = string_match.count_matches(answer)
     # print(f"output: {output_text}\nanswer: {answer}\ndisease_name:{disease_name}")
     output_dict = {
-        "ind_text": ind_num,
+        "prompt": prompt,
+        "ind_text_id": ind_num,
+        "ind_text": ind_text,
         "CBR+LLM Output": answer,
         "Instructions (Prompt Item 3)": local_weighted_vector_prompt_3,
         "Case ID": local_weighted_vector_id,
-        "CBR_LLM Score: ": norm_similarity_score_dict,
+        "CBR_LLM Score: ": match_pass_or_fail,
     }
+
     print(f"output_dict: {output_dict}")
     return output_dict
 
@@ -91,7 +93,6 @@ if __name__ == "__main__":
     cases_csv = "/home/hs875/Llama-2/cases/updated_case_base_3-31.csv"
     data = pd.read_csv(organized_ind)
     cases_data = pd.read_csv(cases_csv)
-    prompt_id = 18
 
     # Pick a random row from the organized_indications.csv and extract the text excerpt
     random_row = data.sample(n=1)
@@ -99,4 +100,5 @@ if __name__ == "__main__":
     ind_num = random_row_dict["Number"]
     ind_text = random_row_dict["Description"]
 
-    run_llm_with_cbr(ind_num, ind_text, cases_data, prompt_id)
+    run_llm_with_cbr(ind_num, ind_text, cases_data)
+
