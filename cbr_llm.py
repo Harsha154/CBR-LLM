@@ -89,8 +89,8 @@ def run_llm_with_cbr(ind_num, ind_text, cases_data, wcl = 0.35, wct = 0.65):
 
 if __name__ == "__main__":
     # Load the data from CSV files
-    organized_ind = "/home/hs875/Llama-2/organized_indications.csv"
-    cases_csv = "/home/hs875/Llama-2/cases/updated_case_base_3-31.csv"
+    organized_ind = "organized_indications.csv"
+    cases_csv = "updated_case_base_3-31.csv"
     data = pd.read_csv(organized_ind)
     cases_data = pd.read_csv(cases_csv)
 
